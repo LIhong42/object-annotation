@@ -1,0 +1,29 @@
+{
+  "image": "ori.png",
+  "image_id": 1,
+  "min_mask_pixels": 6,
+  "categories": [
+    {
+      "id": 1,
+      "name": "person",
+      "labeled": [
+        "person-01-labeling.png",
+        "person-02-labeling.png",
+        "person-03-labeling.png",
+        "person-04-labeling.png"
+      ],
+      "require_single_instance": true,
+      "refine_edges": true,
+      "max_local_shift": 8,
+      "fail_on_local_limit": true
+    },
+    {
+      "id": 2,
+      "name": "cell phone",
+      "labeled": "cell-phone-labeling.png",
+      "refine_edges": true,
+      "max_local_shift": 5,
+      "fail_on_local_limit": true
+    }
+  ]
+}

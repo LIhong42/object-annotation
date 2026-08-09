@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "image": "ori.png",
+  "category": {"id": 1, "name": "button"},
+  "initial_annotation_file": "annotations.initial.json",
+  "instances": [
+    {
+      "instance_key": "button-001",
+      "annotation_id": 1,
+      "description": "衣襟最上方圆形纽扣",
+      "location": {"region": "上中部", "approx_center": [485, 338]},
+      "initial_evaluation": {
+        "label": "标注合格",
+        "passed": true,
+        "issues": [],
+        "evidence": "半透明掩码与可见轮廓贴合"
+      },
+      "retry": {"attempted": false, "retry_count": 0, "labeled": null},
+      "final_evaluation": null
+    },
+    {
+      "instance_key": "button-missing-001",
+      "annotation_id": null,
+      "description": "右袖口金色纽扣",
+      "location": {"region": "右下", "approx_center": [620, 873]},
+      "initial_evaluation": {
+        "label": "漏标",
+        "passed": false,
+        "issues": ["原图可见但 COCO 中无对应实例"],
+        "evidence": "右袖口处可见圆形纽扣"
+      },
+      "retry": {"attempted": true, "retry_count": 1, "labeled": "button-cuff-retry.png"},
+      "final_evaluation": {
+        "label": "标注合格",
+        "passed": true,
+        "issues": [],
+        "evidence": "补标后轮廓贴合"
+      }
+    }
+  ],
+  "summary": {"visible_count": 2, "initial_passed": 1, "initial_failed": 1}
+}
