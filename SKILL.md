@@ -5,13 +5,13 @@ description: 使用 image2 将图片中的指定对象类别标注为高质量 C
 
 ## 强制工作流
 
-1. 读取原图宽高，按用户顺序建立稳定类别 ID。
-2. 先在原图上判断各类别的可见实例数，以及实例是否接触、重叠或被遮挡。
+1. 获取原图宽高。
+2. 先在原图上判断指定类别的可见实例数，以及实例是否接触、重叠或被遮挡。
 3. 选择生成模式：
    - 类别级模式：待标注类别的所有实例彼此明显分离，读取 `references/object.md`，每个类别调用一次 image2。
    - 实例级模式：待标注类别任意实例接触、重叠，或一次生成后红色区域粘连，读取 `references/object-instance.md`，以同一张未标注原图为输入，每次只标注一个实例。
 4. 每次 image2 只能标注一种类别；实例级模式下只能标注该类别的一个可辨识实例。每次都使用同一张未标注原图，不能使用上一张标注图。
-5. 保存所有类别/实例标注图，创建 manifest。单文件和同类别多实例格式见 `references/multiclass-manifest.example.json`。
+5. 保存所有标注图，创建 manifest。单文件和同类别多实例格式见 `references/multiclass-manifest.example.json`。
 6. 构建 COCO 类似标注：
 
 ```bash
@@ -43,7 +43,7 @@ python scripts/quality_cycle.py plan \
   --output <retry-plan.json>
 ```
 
-10. 只对 `retry-plan.json` 中不合格或漏标的实例重新调用 image2。每张重标图只能含一个实例，输入仍为未标注原图。合格实例严禁重做；任一实例 `retry_count` 上限为 1。
+10. 只对 `retry-plan.json` 中不合格或漏标的实例重新调用 image2，生成对应的标注数据。每张重标图只能含一个实例，输入仍为未标注原图。合格实例严禁重做；任一实例 `retry_count` 上限为 1。
 11. 把每个重标图写入报告中的 `retry.labeled`，再定向替换旧 annotation 或补入漏标实例：
 
 ```bash
