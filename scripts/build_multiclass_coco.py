@@ -14,6 +14,8 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
+from _obj_lib.annotation_colors import normalize_annotation_color
+
 _SPEC = importlib.util.spec_from_file_location(
     "extract_object_annotations", SCRIPT_DIR / "extract_object_annotations.py"
 )
@@ -32,8 +34,10 @@ def _load_manifest(path: Path) -> Dict[str, Any]:
 
 def _label_paths(value: Any) -> List[str]:
     names = value if isinstance(value, list) else [value]
-    if not names or any(not isinstance(name, str) or not name.strip() for name in names):
-        raise ValueError("labeled 必须是非空字符串或非空字符串数组")
+    if names == []:
+        return []
+    if any(not isinstance(name, str) or not name.strip() for name in names):
+        raise ValueError("labeled 必须是字符串、字符串数组或表示跳过类别的空数组")
     for name in names:
         normalized = Path(name.replace("\\\\", "/"))
         if not normalized.parts or normalized.parts[0] != "image2-labels":
@@ -67,20 +71,38 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
         seen_names.add(name)
 
         masks = []
-        for labeled_name in _label_paths(item.get("labeled")):
+        try:
+            annotation_color = normalize_annotation_color(
+                item.get("annotation_color", "red")
+            )
+        except ValueError as exc:
+            raise ValueError(f"类别 {name} 的 annotation_color 无效：{exc}") from exc
+        annotation_color_reason = str(item.get("annotation_color_reason", "")).strip()
+        labeled_names = _label_paths(item.get("labeled"))
+        excluded_instances = item.get("excluded_instances", [])
+        if not isinstance(excluded_instances, list):
+            raise ValueError(f"类别 {name} 的 excluded_instances 必须是数组")
+        if not labeled_names and not excluded_instances:
+            raise ValueError(
+                f"类别 {name} 使用空 labeled 时必须记录 excluded_instances"
+            )
+        for labeled_name in labeled_names:
             labeled_path = (base / labeled_name).resolve()
             if not labeled_path.is_file():
                 raise FileNotFoundError(f"类别 {name} 的标注图不存在：{labeled_path}")
             labeled = blocks["read_bgr"](labeled_path)
             file_masks, _, details = extractor._extract_registered_masks_detailed(
-                blocks, labeled, original
+                blocks, labeled, original, annotation_color
             )
             masks.extend(file_masks)
             extraction_files.append({
                 "category": name,
+                "annotation_color": annotation_color,
+                "annotation_color_reason": annotation_color_reason,
                 "labeled": labeled_name,
                 "extracted_instances": len(file_masks),
                 "registration": details["global"],
+                "mask_extraction": details["mask_extraction"],
                 "label_size": details["label_size"],
                 "original_size": details["original_size"],
             })
@@ -98,6 +120,16 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
             min_mask_pixels=min_pixels,
         )
         category_counts[name] = accepted
+        if not labeled_names:
+            extraction_files.append({
+                "category": name,
+                "annotation_color": annotation_color,
+                "annotation_color_reason": annotation_color_reason,
+                "labeled": [],
+                "extracted_instances": 0,
+                "skipped": True,
+                "excluded_instances": excluded_instances,
+            })
         print(
             f"[类别 {index}/{len(manifest['categories'])}] "
             f"{name}(id={category_id}): 提取 {accepted} 个实例"
@@ -114,6 +146,10 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
         "annotation_count": len(coco["annotations"]),
         "category_instance_counts": category_counts,
         "image2_outputs": extraction_files,
+        "excluded_instance_count": sum(
+            len(item.get("excluded_instances", []))
+            for item in manifest["categories"]
+        ),
     }
     return {"output": str(output_path), "summary": summary}
 

@@ -57,7 +57,7 @@ def validate(coco: Dict[str, Any], report: Dict[str, Any]) -> None:
         missing = sorted(set(coco_annotations) - seen)
         raise ValueError(f"COCO annotation 尚未评价：{missing}")
 
-    for field in ("missing_instances", "unexpected_instances"):
+    for field in ("missing_instances", "excluded_instances", "unexpected_instances"):
         if not isinstance(report.get(field), list):
             raise ValueError(f"report.{field} 必须是数组")
     if not isinstance(report.get("summary"), dict):

@@ -5,6 +5,7 @@
 ## 整体扫描
 
 - 按类别记录原图中视觉上可辨识的实例，以及 COCO 中实际提取的实例数。
+- 单独记录规划阶段因可见区域不连通而排除的实例；它们属于 `excluded_instances`，不属于漏标，也不得触发 image2 调用。
 - 两者不必相等。漏标、误标或数量不确定均可交付，但必须写入报告。
 - 对漏标实例记录类别、外观、大致区域、近似中心和参照物。
 - 不因为漏标再次调用 image2。
@@ -36,6 +37,7 @@
 
 - annotations：逐条评价实际 COCO annotation。
 - missing_instances：记录视觉上发现但未进入 COCO 的实例；允许为空。
+- excluded_instances：从 manifest 复制规划阶段排除的实例及原因；允许为空，不得与 missing_instances 重复。
 - unexpected_instances：记录无法对应真实目标的多余 annotation ID；允许为空。
 - summary：如实填写可辨识数量、提取数量和各质量标签计数，不把数量差异视为构建失败。
 - 报告不得包含 retry、replacement、final_evaluation 或任何修复计划字段。

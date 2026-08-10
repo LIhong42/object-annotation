@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""把 image2 的实心红色实例区域直接映射为 COCO 标注。
+"""把 image2 的指定颜色实例区域直接映射为 COCO 标注。
 
 每次调用只处理一种对象类别；多类别标注通过 ``--append`` 依次累加
 到同一个 COCO JSON。
@@ -64,9 +64,10 @@ def _extract_registered_masks(
     blocks: Dict[str, Any],
     labeling_bgr: np.ndarray,
     original_bgr: np.ndarray,
+    annotation_color: str = "red",
 ) -> Tuple[List[np.ndarray], np.ndarray]:
     mapped, affine, _ = _extract_registered_masks_detailed(
-        blocks, labeling_bgr, original_bgr
+        blocks, labeling_bgr, original_bgr, annotation_color
     )
     return mapped, affine
 
@@ -75,16 +76,23 @@ def _extract_registered_masks_detailed(
     blocks: Dict[str, Any],
     labeling_bgr: np.ndarray,
     original_bgr: np.ndarray,
+    annotation_color: str = "red",
 ) -> Tuple[List[np.ndarray], np.ndarray, Dict[str, Any]]:
-    """Map solid-red masks using the first global affine result, unchanged."""
+    """Map selected-color masks using the first global affine result."""
     estimate_global_affine = blocks["estimate_global_affine"]
-    from _obj_lib.filled_mask import solid_red_pixels
-    provisional_red_mask = solid_red_pixels(labeling_bgr).astype(np.uint8) * 255
+    from _obj_lib.filled_mask import annotation_color_pixels, normalize_annotation_color
+    color = normalize_annotation_color(annotation_color)
+    provisional_mask = annotation_color_pixels(labeling_bgr, color).astype(np.uint8) * 255
     affine, registration = estimate_global_affine(
-        labeling_bgr, original_bgr, provisional_red_mask
+        labeling_bgr, original_bgr, provisional_mask
     )
+    mask_diagnostics: Dict[str, Any] = {}
     label_masks, _ = blocks["extract_filled_instances"](
-        labeling_bgr, original_bgr, affine
+        labeling_bgr,
+        original_bgr,
+        affine,
+        annotation_color=color,
+        diagnostics=mask_diagnostics,
     )
     oh, ow = original_bgr.shape[:2]
     mapped = blocks["map_masks_to_original"](
@@ -94,6 +102,7 @@ def _extract_registered_masks_detailed(
         "global": registration.to_dict(),
         "label_size": [int(labeling_bgr.shape[1]), int(labeling_bgr.shape[0])],
         "original_size": [int(ow), int(oh)],
+        "mask_extraction": mask_diagnostics,
     }
     return mapped, affine, details
 
@@ -262,10 +271,12 @@ def remove_category_annotations(
 # ----------------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
+    from _obj_lib.annotation_colors import ANNOTATION_COLORS
+
     parser = argparse.ArgumentParser(
         description=(
-            "对象标注提取：原始图 + 实心红色对象掩码图 -> COCO JSON。"
-            "红色不规则区域直接映射为实例掩码，不运行 SAM。"
+            "对象标注提取：原始图 + 指定颜色对象掩码图 -> COCO JSON。"
+            "颜色区域直接映射为实例掩码，不运行 SAM。"
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -277,7 +288,13 @@ def build_parser() -> argparse.ArgumentParser:
         "-l",
         type=Path,
         required=True,
-        help="对象被纯红色完整填充的图片路径（image2）",
+        help="对象被指定纯色完整填充的图片路径（image2）",
+    )
+    parser.add_argument(
+        "--annotation-color",
+        choices=tuple(ANNOTATION_COLORS),
+        default="red",
+        help="image2 使用的填充颜色；不传时兼容旧流程并默认 red",
     )
     parser.add_argument(
         "--object-name",
@@ -343,12 +360,12 @@ def main(argv: Optional[List[str]] = None) -> int:
     labeling_bgr = blocks["read_bgr"](labeled_path)
     oh, ow = original_bgr.shape[:2]
 
-    # 1) 配准并把 image2 的实心红色实例区域直接映射到原图。
+    # 1) 配准并把 image2 的指定颜色实例区域直接映射到原图。
     masks, _affine = _extract_registered_masks(
-        blocks, labeling_bgr, original_bgr
+        blocks, labeling_bgr, original_bgr, args.annotation_color
     )
     print(
-        f"[掩码] 检测并映射 {len(masks)} 个实心红色实例"
+        f"[掩码] 检测并映射 {len(masks)} 个 {args.annotation_color} 实例"
     )
     # 2) 掩码的最小外接矩形直接作为 bbox，并装配/追加 COCO JSON。
     coco = (
