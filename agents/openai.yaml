@@ -1,13 +1,4 @@
 interface:
-  display_name: Object Annotation
-  short_description: 逐实例生成经配准修正、偏移校正和质量复核的COCO标注数据
-  default_prompt: 请使用 $object-annotation 逐类别或逐实例标注对象，修正掩码偏移与接触实例，并返回通过校验的COCO JSON和可视化。
-  icon_small: assets/icon.svg
-  icon_large: assets/icon.svg
-policy:
-  products:
-  - chatgpt
-  - codex
-  - api
-  - atlas
-  allow_implicit_invocation: true
+  display_name: "Object Annotation"
+  short_description: "单次 image2 标注、原始仿射映射与 COCO 质量审计"
+  default_prompt: "请使用 $object-annotation 单次标注指定对象，返回原始标注图、COCO 数据、可视化和如实质量报告。"

@@ -22,9 +22,9 @@ def estimate_global_affine(
 ) -> Tuple[np.ndarray, RegistrationResult]:
     """估计 labeling -> object 的全局锚点变换。
 
-    默认保留更稳定的相似变换；当完整仿射对同一批匹配点取得显著更多
-    RANSAC 内点且线性部分没有翻转或病态缩放时，允许使用非均匀缩放。
-    该矩阵只负责把标注锚点送入局部搜索区，不作为最终框或质量真值。
+    同时估计相似变换和完整仿射，按实际内点数、内点比例和重投影误差
+    选择结果。除矩阵必须有限且可逆外，不预设缩放、各向异性或平移界限。
+    返回的首次全局矩阵直接用于最终 mask 映射，不进入局部修正。
     """
     label_gray = cv2.cvtColor(labeling_bgr, cv2.COLOR_BGR2GRAY)
     object_gray = cv2.cvtColor(object_bgr, cv2.COLOR_BGR2GRAY)
@@ -115,21 +115,7 @@ def _evaluate_affine_candidate(
     matrix = np.asarray(affine, dtype=np.float64)
     if matrix.shape != (2, 3) or not np.all(np.isfinite(matrix)):
         return None
-    linear = matrix[:, :2]
-    determinant = float(np.linalg.det(linear))
-    singular_values = np.linalg.svd(linear, compute_uv=False)
-    minimum_scale = float(np.min(singular_values))
-    maximum_scale = float(np.max(singular_values))
-    if (
-        determinant <= 0.0
-        # image generators commonly preserve composition while returning a
-        # 2x--4x raster.  test2, for example, needs a 0.4164 label->original
-        # scale.  The previous 0.45 lower bound rejected that otherwise valid
-        # RANSAC solution and fell back to a translation-only transform.
-        or minimum_scale < 0.20
-        or maximum_scale > 5.00
-        or maximum_scale / max(1e-6, minimum_scale) > 1.80
-    ):
+    if abs(float(np.linalg.det(matrix[:, :2]))) <= np.finfo(np.float64).eps:
         return None
     inliers = np.asarray(inlier_mask).reshape(-1).astype(bool)
     if len(inliers) != len(src) or int(inliers.sum()) < 6:
@@ -150,25 +136,14 @@ def _select_affine_candidate(
 ) -> tuple[np.ndarray, np.ndarray, float, str] | None:
     if not candidates:
         return None
-    by_name = {item[3]: item for item in candidates}
-    partial = by_name.get("similarity")
-    full = by_name.get("full_affine")
-    if partial is None:
-        return full
-    if full is None:
-        return partial
-
-    partial_count = int(partial[1].sum())
-    full_count = int(full[1].sum())
-    partial_ratio = float(partial[1].mean())
-    full_ratio = float(full[1].mean())
-    required_gain = max(12, int(np.ceil(0.20 * partial_count)))
-    if (
-        full_count >= partial_count + required_gain
-        and full_ratio >= partial_ratio + 0.05
-    ):
-        return full
-    return partial
+    return max(
+        candidates,
+        key=lambda item: (
+            int(item[1].sum()),
+            float(item[1].mean()),
+            -float(item[2]),
+        ),
+    )
 
 
 def _phase_correlation_fallback(
@@ -195,20 +170,12 @@ def _phase_correlation_fallback(
     g1 = gradient_magnitude(label_clean)
     g2 = gradient_magnitude(object_gray)
     window = cv2.createHanningWindow((ow, oh), cv2.CV_32F)
-    shift, response = cv2.phaseCorrelate(
+    shift, _response = cv2.phaseCorrelate(
         g1.astype(np.float32), g2.astype(np.float32), window
     )
     tx, ty = shift
-    # Flat or nearly flat backgrounds do not define a reliable translation.
-    # In that case dimension scaling is safer than an arbitrary phase peak.
-    if (
-        not np.isfinite(tx)
-        or not np.isfinite(ty)
-        or not np.isfinite(response)
-        or float(response) < 0.05
-        or abs(float(tx)) > 0.25 * ow
-        or abs(float(ty)) > 0.25 * oh
-    ):
+    # Only reject non-finite numerical output; do not impose a translation cap.
+    if not np.isfinite(tx) or not np.isfinite(ty):
         tx = ty = 0.0
     return np.array(
         [[scale_x, 0.0, tx], [0.0, scale_y, ty]], dtype=np.float32

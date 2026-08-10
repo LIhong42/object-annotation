@@ -45,14 +45,12 @@ def _import_building_blocks():
     from _obj_lib.filled_mask import (
         extract_filled_instances,
         map_masks_to_original,
-        refine_masks_to_original_edges,
     )
     from _obj_lib.registration import estimate_global_affine
     from _obj_lib.utils import read_bgr
     return {
         "extract_filled_instances": extract_filled_instances,
         "map_masks_to_original": map_masks_to_original,
-        "refine_masks_to_original_edges": refine_masks_to_original_edges,
         "estimate_global_affine": estimate_global_affine,
         "read_bgr": read_bgr,
     }
@@ -77,12 +75,8 @@ def _extract_registered_masks_detailed(
     blocks: Dict[str, Any],
     labeling_bgr: np.ndarray,
     original_bgr: np.ndarray,
-    *,
-    refine_edges: bool = True,
-    max_local_shift: int = 8,
 ) -> Tuple[List[np.ndarray], np.ndarray, Dict[str, Any]]:
-    """Extract masks with registration diagnostics and local drift repair."""
-    """Estimate labeling->original registration and map solid-red masks."""
+    """Map solid-red masks using the first global affine result, unchanged."""
     estimate_global_affine = blocks["estimate_global_affine"]
     from _obj_lib.filled_mask import solid_red_pixels
     provisional_red_mask = solid_red_pixels(labeling_bgr).astype(np.uint8) * 255
@@ -96,14 +90,8 @@ def _extract_registered_masks_detailed(
     mapped = blocks["map_masks_to_original"](
         label_masks, affine, ow, oh
     )
-    local = []
-    if refine_edges and mapped:
-        mapped, local = blocks["refine_masks_to_original_edges"](
-            mapped, original_bgr, max_shift=max_local_shift
-        )
     details = {
         "global": registration.to_dict(),
-        "local_refinement": local,
         "label_size": [int(labeling_bgr.shape[1]), int(labeling_bgr.shape[0])],
         "original_size": [int(ow), int(oh)],
     }

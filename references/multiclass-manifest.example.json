@@ -1,29 +1,22 @@
 {
-  "image": "ori.png",
+  "image": "images/ori.png",
   "image_id": 1,
   "min_mask_pixels": 6,
   "categories": [
     {
       "id": 1,
-      "name": "person",
+      "name": "chair",
       "labeled": [
-        "person-01-labeling.png",
-        "person-02-labeling.png",
-        "person-03-labeling.png",
-        "person-04-labeling.png"
-      ],
-      "require_single_instance": true,
-      "refine_edges": true,
-      "max_local_shift": 8,
-      "fail_on_local_limit": true
+        "image2-labels/chair-left-to-right-01.png",
+        "image2-labels/chair-left-to-right-02.png",
+        "image2-labels/chair-left-to-right-03.png",
+        "image2-labels/chair-left-to-right-04.png"
+      ]
     },
     {
       "id": 2,
       "name": "cell phone",
-      "labeled": "cell-phone-labeling.png",
-      "refine_edges": true,
-      "max_local_shift": 5,
-      "fail_on_local_limit": true
+      "labeled": "image2-labels/cell-phone.png"
     }
   ]
 }

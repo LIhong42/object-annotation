@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sequentially combine one-image2-output-per-category into final COCO data."""
+"""Combine one-time image2 label outputs into a multi-class COCO file."""
 
 from __future__ import annotations
 
@@ -30,20 +30,15 @@ def _load_manifest(path: Path) -> Dict[str, Any]:
     return data
 
 
-def _simplified_coco(coco: Dict[str, Any]) -> Dict[str, Any]:
-    """返回 COCO 的简化副本：每个 annotation 去掉 area/iscrowd/segmentation。
-
-    直接由完整 annotations.json 派生，作为 annotation-summary.json 的内容。
-    """
-    drop = ("area", "iscrowd", "segmentation")
-    return {
-        "images": coco.get("images", []),
-        "categories": coco.get("categories", []),
-        "annotations": [
-            {k: v for k, v in ann.items() if k not in drop}
-            for ann in coco.get("annotations", [])
-        ],
-    }
+def _label_paths(value: Any) -> List[str]:
+    names = value if isinstance(value, list) else [value]
+    if not names or any(not isinstance(name, str) or not name.strip() for name in names):
+        raise ValueError("labeled 必须是非空字符串或非空字符串数组")
+    for name in names:
+        normalized = Path(name.replace("\\\\", "/"))
+        if not normalized.parts or normalized.parts[0] != "image2-labels":
+            raise ValueError(f"image2 原始标注图必须位于 image2-labels/：{name}")
+    return names
 
 
 def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any]:
@@ -59,6 +54,8 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
     image_id = int(manifest.get("image_id", 1))
     min_pixels = int(manifest.get("min_mask_pixels", 6))
     coco: Dict[str, Any] = {"images": [], "categories": [], "annotations": []}
+    extraction_files: List[Dict[str, Any]] = []
+    category_counts: Dict[str, int] = {}
 
     seen_names = set()
     for index, item in enumerate(manifest["categories"], start=1):
@@ -68,42 +65,26 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
         if name in seen_names:
             raise ValueError(f"manifest 中类别重复：{name}")
         seen_names.add(name)
-        labeled_value = item["labeled"]
-        labeled_names = labeled_value if isinstance(labeled_value, list) else [labeled_value]
-        if not labeled_names:
-            raise ValueError(f"类别 {name} 的 labeled 不能为空")
-        require_single = bool(item.get("require_single_instance", isinstance(labeled_value, list)))
-        refine_edges = bool(item.get("refine_edges", True))
-        max_local_shift = int(item.get("max_local_shift", 8))
-        fail_on_local_limit = bool(item.get("fail_on_local_limit", True))
+
         masks = []
-        for labeled_name in labeled_names:
+        for labeled_name in _label_paths(item.get("labeled")):
             labeled_path = (base / labeled_name).resolve()
             if not labeled_path.is_file():
                 raise FileNotFoundError(f"类别 {name} 的标注图不存在：{labeled_path}")
             labeled = blocks["read_bgr"](labeled_path)
             file_masks, _, details = extractor._extract_registered_masks_detailed(
-                blocks,
-                labeled,
-                original,
-                refine_edges=refine_edges,
-                max_local_shift=max_local_shift,
+                blocks, labeled, original
             )
-            if require_single and len(file_masks) != 1:
-                raise ValueError(
-                    f"类别 {name} 的实例级标注 {labeled_path.name} 应包含 1 个红色实例，"
-                    f"实际提取 {len(file_masks)} 个；请定向重做该实例"
-                )
-            if fail_on_local_limit and any(
-                entry.get("at_search_limit", False)
-                for entry in details.get("local_refinement", [])
-            ):
-                raise ValueError(
-                    f"类别 {name} 的 {labeled_path.name} 局部校正到达 "
-                    f"±{max_local_shift}px 搜索边界；视为配准失败，请定向重做，"
-                    "不要扩大搜索范围掩盖偏移"
-                )
             masks.extend(file_masks)
+            extraction_files.append({
+                "category": name,
+                "labeled": labeled_name,
+                "extracted_instances": len(file_masks),
+                "registration": details["global"],
+                "label_size": details["label_size"],
+                "original_size": details["original_size"],
+            })
+
         requested_id = item.get("id")
         category_id, accepted = extractor._build_coco(
             coco,
@@ -116,29 +97,34 @@ def build_from_manifest(manifest_path: Path, output_path: Path) -> Dict[str, Any
             masks=masks,
             min_mask_pixels=min_pixels,
         )
-        print(f"[类别 {index}/{len(manifest['categories'])}] {name}(id={category_id}): {accepted} 个实例")
+        category_counts[name] = accepted
+        print(
+            f"[类别 {index}/{len(manifest['categories'])}] "
+            f"{name}(id={category_id}): 提取 {accepted} 个实例"
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(coco, fh, ensure_ascii=False, indent=2)
-    return {
+
+    summary = {
         "image": str(image_path),
-        "output": str(output_path),
+        "annotation_file": str(output_path),
+        "category_count": len(coco["categories"]),
         "annotation_count": len(coco["annotations"]),
-        "simplified": _simplified_coco(coco),
+        "category_instance_counts": category_counts,
+        "image2_outputs": extraction_files,
     }
+    return {"output": str(output_path), "summary": summary}
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="按类别串行合并 image2 实心红色标注图，生成一个最终 COCO JSON"
+        description="合并 image2 单次标注输出；不强制实例数量，不执行仿射后修复"
     )
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument(
-        "--summary", type=Path, default=None,
-        help="简化标注 JSON（annotations.json 去掉 area/iscrowd/segmentation）输出路径",
-    )
+    parser.add_argument("--summary", type=Path, default=None)
     return parser
 
 
@@ -149,9 +135,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         summary_path = args.summary.resolve()
         summary_path.parent.mkdir(parents=True, exist_ok=True)
         with summary_path.open("w", encoding="utf-8") as fh:
-            json.dump(result["simplified"], fh, ensure_ascii=False, indent=2)
-        print(f"[摘要] 简化标注 -> {summary_path}")
-    print(f"[最终 COCO] {result['annotation_count']} 个实例 -> {result['output']}")
+            json.dump(result["summary"], fh, ensure_ascii=False, indent=2)
+        print(f"[摘要] -> {summary_path}")
+    print(f"[COCO] -> {result['output']}")
     return 0
 
 
