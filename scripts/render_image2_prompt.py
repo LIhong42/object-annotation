@@ -38,7 +38,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--target-objects", required=True)
     parser.add_argument("--size", required=True)
     parser.add_argument("--ratio", required=True)
-    parser.add_argument("--excluded-instances", required=True)
     parser.add_argument(
         "--annotation-color", choices=tuple(ANNOTATION_COLORS), default="red"
     )
@@ -56,9 +55,7 @@ def main(argv: Optional[list[str]] = None) -> int:
         "TARGET_OBJECT": args.target_objects,
         "SIZE": args.size,
         "RATIO": args.ratio,
-        "EXCLUDED_INSTANCES": args.excluded_instances,
         "INSTANCE_DESCRIPTION": args.instance_description or "",
-        "ANNOTATION_COLOR_KEY": args.annotation_color,
         "ANNOTATION_COLOR_NAME": str(color_spec["display"]),
         "ANNOTATION_COLOR_RGB": str(color_spec["rgb_text"]),
     }
