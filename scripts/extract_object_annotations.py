@@ -291,6 +291,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=6,
         help="掩码像素少于此值则丢弃，避免退化标注",
     )
+    parser.add_argument(
+        "--diagnostics",
+        type=Path,
+        help="可选：输出配准、尺寸、仿射矩阵和掩码提取诊断 JSON",
+    )
     return parser
 
 
@@ -312,7 +317,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     oh, ow = original_bgr.shape[:2]
 
     # 1) 配准并把 image2 的指定颜色实例区域直接映射到原图。
-    masks, _affine = _extract_registered_masks(
+    masks, affine, diagnostics = _extract_registered_masks_detailed(
         blocks, labeling_bgr, original_bgr, args.annotation_color
     )
     print(
@@ -335,6 +340,26 @@ def main(argv: Optional[List[str]] = None) -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w", encoding="utf-8") as fh:
         json.dump(coco, fh, ensure_ascii=False, indent=2)
+
+    if args.diagnostics:
+        diagnostics_path = args.diagnostics.resolve()
+        diagnostics_path.parent.mkdir(parents=True, exist_ok=True)
+        diagnostics.update({
+            "schema_version": "1.0",
+            "image": str(image_path),
+            "labeled_image": str(labeled_path),
+            "object_name": args.object_name,
+            "annotation_color": args.annotation_color,
+            "affine_label_to_original": np.asarray(affine).tolist(),
+            "mapped_mask_count": len(masks),
+            "accepted_annotation_count": accepted,
+        })
+        temporary = diagnostics_path.with_suffix(diagnostics_path.suffix + ".tmp")
+        temporary.write_text(
+            json.dumps(diagnostics, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(diagnostics_path)
 
     print(
         f"[完成] 类别 '{args.object_name}' (id={category_id}) "

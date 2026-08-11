@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import sys
 from pathlib import Path
@@ -35,7 +36,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="完整填充参考模板，并输出可原样发送给 image2 的提示词"
     )
     parser.add_argument("--template", type=Path, required=True)
-    parser.add_argument("--target-objects", required=True)
+    parser.add_argument("--eligibility-report", type=Path, required=True)
     parser.add_argument("--size", required=True)
     parser.add_argument("--ratio", required=True)
     parser.add_argument(
@@ -48,9 +49,26 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[list[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     template = args.template.read_text(encoding="utf-8")
+    report = json.loads(args.eligibility_report.read_text(encoding="utf-8"))
+    from validate_eligibility_report import validate
+    validate(report)
+    if report["status"] != "eligible":
+        raise ValueError("仅 eligible 类别可以渲染 image2 prompt")
+
     color_spec = ANNOTATION_COLORS[args.annotation_color]
+    inventory = "\n".join(
+        f"- {item['instance_key']}：{item['description']}；位置：{item['location']}"
+        for item in report["target_inventory"]
+    )
+    exclusions = "\n".join(
+        f"- {item['description']}：{item['reason']}"
+        for item in report["exclusions"]
+    ) or "- 无额外排除项；仍然只能填充目标类别。"
     values = {
-        "TARGET_OBJECTS": args.target_objects,
+        "TARGET_OBJECTS": str(report["target_category"]),
+        "EXPECTED_COUNT": str(report["observed_instance_count"]),
+        "TARGET_INVENTORY": inventory,
+        "EXCLUSIONS": exclusions,
         "SIZE": args.size,
         "RATIO": args.ratio,
         "ANNOTATION_COLOR_NAME": str(color_spec["display"]),

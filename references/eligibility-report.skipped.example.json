@@ -1,0 +1,26 @@
+{
+  "schema_version": "2.0",
+  "image": "images/ori.png",
+  "target_category": "dining table",
+  "status": "skipped",
+  "observed_instance_count": 1,
+  "all_instances_separated": true,
+  "all_instances_connected": false,
+  "target_inventory": [
+    {
+      "instance_key": "dining-table-001",
+      "description": "中央餐桌",
+      "location": "画面中央"
+    }
+  ],
+  "exclusions": [],
+  "blocking_relations": [
+    {
+      "type": "disconnected_visible_regions",
+      "instances": ["dining-table-001"],
+      "location": "画面中央",
+      "evidence": "桌面与可见桌腿被遮挡物分隔为多个互不连通区域"
+    }
+  ],
+  "decision": "整类跳过；不调用 image2，不生成标注数据"
+}

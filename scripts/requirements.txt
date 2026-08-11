@@ -1,4 +1,5 @@
-numpy>=1.24
-opencv-python-headless>=4.8
-Pillow>=10
-scipy>=1.10
+# Tested together on Python 3.10-3.12. Keep this set locked to avoid ABI drift.
+numpy==1.26.4
+opencv-python-headless==4.10.0.84
+Pillow==10.4.0
+scipy==1.13.1

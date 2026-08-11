@@ -21,6 +21,7 @@
 | 掩码不足 | 目标可见区域部分缺失 |
 | 掩码溢出 | 掩码侵入背景、阴影或邻近对象 |
 | 粘连 | 本应独立的同类实例被连为一个 annotation |
+| 实例拆分 | 一个真实实例被错误拆成多个 annotation |
 
 允许同一实例存在多个问题；label 写最严重问题，issues 列出其余问题。
 
@@ -39,5 +40,6 @@
 - missing_instances：记录视觉上发现但未进入 COCO 的实例；允许为空。
 - excluded_instances：保留为空数组；类别级门禁不做逐实例排除，失败时整类在标注前跳过。
 - unexpected_instances：记录无法对应真实目标的多余 annotation ID；允许为空。
+- 如果多个 annotation 对应同一真实实例，分别标为“实例拆分”，并在 evidence 中互相引用。
 - summary：如实填写可辨识数量、提取数量和各质量标签计数，不把数量差异视为构建失败。
 - 报告不得包含 retry、replacement、final_evaluation 或任何修复计划字段。

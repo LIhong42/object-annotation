@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "image": "images/ori.png",
+  "image_id": 1,
+  "categories": [
+    {
+      "id": 1,
+      "name": "chair",
+      "status": "eligible",
+      "annotations": "chair/annotations.json",
+      "quality_report": "chair/quality-report.json",
+      "eligibility_report": "chair/eligibility-report.json"
+    },
+    {
+      "id": 2,
+      "name": "dining table",
+      "status": "skipped",
+      "eligibility_report": "dining-table/eligibility-report.json"
+    }
+  ]
+}

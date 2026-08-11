@@ -1,17 +1,30 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "2.0",
   "image": "images/ori.png",
   "target_category": "chair",
-  "status": "skipped",
-  "observed_instance_count": 4,
-  "all_instances_separated": false,
-  "blocking_relations": [
+  "status": "eligible",
+  "observed_instance_count": 2,
+  "all_instances_separated": true,
+  "all_instances_connected": true,
+  "target_inventory": [
     {
-      "type": "same_class_overlap",
-      "instances": ["从左向右第2把椅子", "从左向右第3把椅子"],
-      "location": "中央偏下",
-      "evidence": "两个实例轮廓前后重叠，之间不存在可见背景间隔"
+      "instance_key": "chair-001",
+      "description": "木质靠背椅",
+      "location": "左下，餐桌左侧"
+    },
+    {
+      "instance_key": "chair-002",
+      "description": "木质靠背椅",
+      "location": "右下，餐桌右侧"
     }
   ],
-  "decision": "整类跳过；不调用 image2，不生成标注数据"
+  "exclusions": [
+    {
+      "description": "中央餐桌",
+      "reason": "属于 dining table，不是 chair"
+    }
+  ],
+  "blocking_relations": [],
+  "evidence": "两个实例之间存在清晰背景间隔，且各自可见区域为单一连通区域",
+  "decision": "允许进行一次类别级 image2 调用"
 }
