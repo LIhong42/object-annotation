@@ -1,4 +1,4 @@
 interface:
   display_name: "Object Annotation"
-  short_description: "单次 image2 标注、原始仿射映射与 COCO 质量审计"
-  default_prompt: "请使用 $object-annotation 单次标注指定对象，返回原始标注图、COCO 数据、可视化和如实质量报告。"
+  short_description: "互不接触同类实例的单类别 image2 标注与 COCO 审计"
+  default_prompt: "请使用 $object-annotation 检查一个对象类别的实例是否全部分离；仅在通过门禁后调用一次 image2，并返回 COCO、可视化和质量报告。"

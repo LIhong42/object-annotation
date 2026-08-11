@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "image": "images/ori.png",
+  "target_category": "chair",
+  "status": "skipped",
+  "observed_instance_count": 4,
+  "all_instances_separated": false,
+  "blocking_relations": [
+    {
+      "type": "same_class_overlap",
+      "instances": ["从左向右第2把椅子", "从左向右第3把椅子"],
+      "location": "中央偏下",
+      "evidence": "两个实例轮廓前后重叠，之间不存在可见背景间隔"
+    }
+  ],
+  "decision": "整类跳过；不调用 image2，不生成标注数据"
+}

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
-"""把 image2 的指定颜色实例区域直接映射为 COCO 标注。
+"""把 image2 的指定颜色实例区域直接映射为单类别 COCO 标注。
 
-每次调用只处理一种对象类别；多类别标注通过 ``--append`` 依次累加
-到同一个 COCO JSON。
+每次调用覆盖输出文件，只处理一张图片中的一种对象类别。
 
 用法示例::
 
@@ -12,13 +11,6 @@
         --object-name "person" \
         --output annotations.json
 
-    # 第二个类别追加进同一个 JSON
-    python extract_object_annotations.py \
-        --image ori.png \
-        --labeled dog-labeling.png \
-        --object-name "dog" \
-        --output annotations.json \
-        --append
 """
 
 from __future__ import annotations
@@ -145,18 +137,8 @@ def _mask_to_polygons(mask: np.ndarray) -> List[List[float]]:
 
 
 # ----------------------------------------------------------------------------
-# COCO JSON 装配 / 追加
+# COCO JSON 装配
 # ----------------------------------------------------------------------------
-
-def _load_existing_coco(path: Path) -> Dict[str, Any]:
-    if not path.is_file():
-        return {"images": [], "categories": [], "annotations": []}
-    with path.open("r", encoding="utf-8") as fh:
-        data = json.load(fh)
-    data.setdefault("images", [])
-    data.setdefault("categories", [])
-    data.setdefault("annotations", [])
-    return data
 
 
 def _next_id(items: List[Dict[str, Any]], key: str) -> int:
@@ -189,13 +171,11 @@ def _ensure_category_entry(
     name: str,
     category_id: Optional[int],
 ) -> int:
-    # 同名类别复用，避免重复标注同一类别时产生重复 category。
     for cat in coco["categories"]:
         if str(cat.get("name")) == str(name):
             return int(cat["id"])
     if category_id is None:
         category_id = _next_id(coco["categories"], "id")
-    # 若指定 id 已被别的类别占用，则自动取下一个可用 id。
     existing_ids = {int(c.get("id")) for c in coco["categories"]}
     while int(category_id) in existing_ids:
         category_id = int(category_id) + 1
@@ -250,22 +230,6 @@ def _build_coco(
     return category_id, accepted
 
 
-def remove_category_annotations(
-    coco: Dict[str, Any], *, image_id: int, category_id: int
-) -> int:
-    """Remove an existing image/category slice before deterministically rebuilding it."""
-    before = len(coco.get("annotations", []))
-    coco["annotations"] = [
-        ann
-        for ann in coco.get("annotations", [])
-        if not (
-            int(ann.get("image_id", -1)) == int(image_id)
-            and int(ann.get("category_id", -1)) == int(category_id)
-        )
-    ]
-    return before - len(coco["annotations"])
-
-
 # ----------------------------------------------------------------------------
 # 主流程
 # ----------------------------------------------------------------------------
@@ -310,19 +274,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="输出 COCO JSON 路径",
     )
     parser.add_argument(
-        "--append",
-        action="store_true",
-        help="追加到已有 COCO JSON（多类别依次标注时，第二个类别起启用）",
-    )
-    parser.add_argument(
-        "--replace-category",
-        action="store_true",
-        help=(
-            "与 --append 配合：先删除当前 image/category 的旧 annotations 再写入，"
-            "使同一类别重跑不会产生重复标注"
-        ),
-    )
-    parser.add_argument(
         "--image-id",
         type=int,
         default=1,
@@ -332,7 +283,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--category-id",
         type=int,
         default=None,
-        help="指定类别 id；默认自动分配。同名类别会自动复用",
+        help="指定类别 id；单类别任务默认使用 1",
     )
     parser.add_argument(
         "--min-mask-pixels",
@@ -367,18 +318,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(
         f"[掩码] 检测并映射 {len(masks)} 个 {args.annotation_color} 实例"
     )
-    # 2) 掩码的最小外接矩形直接作为 bbox，并装配/追加 COCO JSON。
-    coco = (
-        _load_existing_coco(output_path)
-        if args.append
-        else {"images": [], "categories": [], "annotations": []}
-    )
-    # 先确保类别存在，才能按稳定 category_id 替换该切片。
-    category_id = _ensure_category_entry(coco, args.object_name, args.category_id)
-    if args.replace_category:
-        remove_category_annotations(
-            coco, image_id=args.image_id, category_id=category_id
-        )
+    # 2) 掩码的最小外接矩形直接作为 bbox，并装配单类别 COCO JSON。
+    coco = {"images": [], "categories": [], "annotations": []}
+    category_id = _ensure_category_entry(coco, args.object_name, args.category_id or 1)
     category_id, accepted = _build_coco(
         coco,
         image_id=args.image_id,

@@ -41,7 +41,6 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--annotation-color", choices=tuple(ANNOTATION_COLORS), default="red"
     )
-    parser.add_argument("--instance-description")
     parser.add_argument("--output", type=Path, required=True)
     return parser
 
@@ -52,10 +51,8 @@ def main(argv: Optional[list[str]] = None) -> int:
     color_spec = ANNOTATION_COLORS[args.annotation_color]
     values = {
         "TARGET_OBJECTS": args.target_objects,
-        "TARGET_OBJECT": args.target_objects,
         "SIZE": args.size,
         "RATIO": args.ratio,
-        "INSTANCE_DESCRIPTION": args.instance_description or "",
         "ANNOTATION_COLOR_NAME": str(color_spec["display"]),
         "ANNOTATION_COLOR_RGB": str(color_spec["rgb_text"]),
     }

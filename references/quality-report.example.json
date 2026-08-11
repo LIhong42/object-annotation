@@ -27,21 +27,12 @@
       "evidence": "原图可见，但 COCO 中没有对应 annotation"
     }
   ],
-  "excluded_instances": [
-    {
-      "instance_key": "book-excluded-001",
-      "category_id": 5,
-      "category_name": "book",
-      "description": "被遮挡物分隔，仅有两个互不连通书角可见的书",
-      "location": {"region": "右下", "approx_center": [580, 330]},
-      "reason": "可见区域不连通，规划阶段禁止标注"
-    }
-  ],
+  "excluded_instances": [],
   "unexpected_instances": [],
   "summary": {
     "visually_observed_count": 2,
     "extracted_annotation_count": 1,
-    "excluded_instance_count": 1,
+    "excluded_instance_count": 0,
     "quality_issue_count": 1,
     "labels": {"标注合格": 1, "漏标": 1}
   }
