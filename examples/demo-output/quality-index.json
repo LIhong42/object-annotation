@@ -1,0 +1,173 @@
+{
+  "schema_version": "1.0",
+  "image": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/images/ori.png",
+  "categories": [
+    {
+      "category_id": 1,
+      "category_name": "chair",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/chair/eligibility-report.json",
+      "annotation_count": 2,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/chair/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/chair/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 4,
+        "extracted_annotation_count": 2,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 1,
+        "labels": {
+          "标注合格": 1,
+          "粘连": 1
+        }
+      }
+    },
+    {
+      "category_id": 2,
+      "category_name": "vase",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/vase/eligibility-report.json",
+      "annotation_count": 5,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/vase/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/vase/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 4,
+        "extracted_annotation_count": 5,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 3,
+        "labels": {
+          "粘连": 1,
+          "误标": 2,
+          "标注合格": 2
+        }
+      }
+    },
+    {
+      "category_id": 3,
+      "category_name": "tv",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/tv/eligibility-report.json",
+      "annotation_count": 1,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/tv/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/tv/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 1,
+        "extracted_annotation_count": 1,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 1,
+        "labels": {
+          "掩码不足": 1
+        }
+      }
+    },
+    {
+      "category_id": 4,
+      "category_name": "person",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/person/eligibility-report.json",
+      "annotation_count": 2,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/person/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/person/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 2,
+        "extracted_annotation_count": 2,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 0,
+        "labels": {
+          "标注合格": 2
+        }
+      }
+    },
+    {
+      "category_id": 5,
+      "category_name": "book",
+      "status": "skipped",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/book/eligibility-report.json",
+      "annotation_count": 0
+    },
+    {
+      "category_id": 6,
+      "category_name": "potted plant",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/potted-plant/eligibility-report.json",
+      "annotation_count": 4,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/potted-plant/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/potted-plant/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 4,
+        "extracted_annotation_count": 4,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 0,
+        "labels": {
+          "标注合格": 4
+        }
+      }
+    },
+    {
+      "category_id": 7,
+      "category_name": "microwave",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/microwave/eligibility-report.json",
+      "annotation_count": 1,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/microwave/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/microwave/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 1,
+        "extracted_annotation_count": 1,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 0,
+        "labels": {
+          "标注合格": 1
+        }
+      }
+    },
+    {
+      "category_id": 8,
+      "category_name": "refrigerator",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/refrigerator/eligibility-report.json",
+      "annotation_count": 2,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/refrigerator/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/refrigerator/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 1,
+        "extracted_annotation_count": 2,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 2,
+        "labels": {
+          "实例拆分": 2
+        }
+      }
+    },
+    {
+      "category_id": 9,
+      "category_name": "clock",
+      "status": "eligible",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/clock/eligibility-report.json",
+      "annotation_count": 1,
+      "annotations": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/clock/annotations.json",
+      "quality_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/clock/quality-report.json",
+      "quality_summary": {
+        "visually_observed_count": 1,
+        "extracted_annotation_count": 1,
+        "excluded_instance_count": 0,
+        "quality_issue_count": 0,
+        "labels": {
+          "标注合格": 1
+        }
+      }
+    },
+    {
+      "category_id": 10,
+      "category_name": "dining table",
+      "status": "skipped",
+      "eligibility_report": "/workspace/scratch/ebc45aba91f3/object_annotation_dataset/dining-table/eligibility-report.json",
+      "annotation_count": 0
+    }
+  ],
+  "summary": {
+    "category_count": 10,
+    "eligible_category_count": 8,
+    "skipped_category_count": 2,
+    "annotation_count": 18
+  }
+}

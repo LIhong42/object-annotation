@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "image": "images/ori.png",
+  "image_id": 1,
+  "categories": [
+    {"id": 1, "name": "chair", "status": "eligible", "annotations": "chair/annotations.json", "quality_report": "chair/quality-report.json", "eligibility_report": "chair/eligibility-report.json"},
+    {"id": 2, "name": "vase", "status": "eligible", "annotations": "vase/annotations.json", "quality_report": "vase/quality-report.json", "eligibility_report": "vase/eligibility-report.json"},
+    {"id": 3, "name": "tv", "status": "eligible", "annotations": "tv/annotations.json", "quality_report": "tv/quality-report.json", "eligibility_report": "tv/eligibility-report.json"},
+    {"id": 4, "name": "person", "status": "eligible", "annotations": "person/annotations.json", "quality_report": "person/quality-report.json", "eligibility_report": "person/eligibility-report.json"},
+    {"id": 5, "name": "book", "status": "skipped", "eligibility_report": "book/eligibility-report.json"},
+    {"id": 6, "name": "potted plant", "status": "eligible", "annotations": "potted-plant/annotations.json", "quality_report": "potted-plant/quality-report.json", "eligibility_report": "potted-plant/eligibility-report.json"},
+    {"id": 7, "name": "microwave", "status": "eligible", "annotations": "microwave/annotations.json", "quality_report": "microwave/quality-report.json", "eligibility_report": "microwave/eligibility-report.json"},
+    {"id": 8, "name": "refrigerator", "status": "eligible", "annotations": "refrigerator/annotations.json", "quality_report": "refrigerator/quality-report.json", "eligibility_report": "refrigerator/eligibility-report.json"},
+    {"id": 9, "name": "clock", "status": "eligible", "annotations": "clock/annotations.json", "quality_report": "clock/quality-report.json", "eligibility_report": "clock/eligibility-report.json"},
+    {"id": 10, "name": "dining table", "status": "skipped", "eligibility_report": "dining-table/eligibility-report.json"}
+  ]
+}
